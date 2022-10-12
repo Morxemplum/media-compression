@@ -2,6 +2,12 @@
 
 These are a collection of shell scripts (written in Bash) that take media and compress them to lower file size without sacrificing quality (unless specified). A couple of different programs are needed to run the scripts, depending on the script
 
+### Scripts:
+- [GIF Converter](#gif-converter)
+- [H.264 To AV1 Converter](#h264-to-av1-converter)
+- [JPEG Converter](#jpeg-converter)
+- [PNG Converter](#png-converter)
+
 ## GIF Converter
 #### (Requires [ffmpeg](https://ffmpeg.org/))
 
