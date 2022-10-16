@@ -1,16 +1,17 @@
 #!/bin/bash
 
-# FFMPEG is needed to run this script
+# ffmpeg is needed to run this script
 
 # You can specify the output directory here or pass it in as a command argument (Type --help)
 output_dir=''
 input_dir='.'
 overwrite_files='n'
+delete_originals='n'
 
 # Parse flags
 
 SHORT_ARGS="hi:o:v"
-LONG_ARGS=help,input:,output:,overwrite
+LONG_ARGS=delete-originals,help,input:,output:,overwrite
 
 PARSED=`getopt --options $SHORT_ARGS --longoptions $LONG_ARGS --name "$0" -- "$@"`
 
@@ -19,10 +20,14 @@ eval set --"$PARSED"
 while true; do
 	case "$1" in
 		-h|--help) echo "VALID FLAGS"
+			echo "--delete-originals		: After a GIF is successfully converted, the original is deleted."
 			echo "-i | --input 	[directory_path]: Manually specify input directory to convert. If not given, uses the same directory this script resides in."
-			echo "-v | --overwrite		: Makes ffmpeg overwrite files instead of skipping them"
 			echo "-o | --output 	[directory_path]: Manually specify output directory for files"
+			echo "-v | --overwrite		: Makes ffmpeg overwrite files instead of skipping them"
 			exit 0
+			;;
+		--delete-originals) delete_originals="y"
+			shift
 			;;
 		-i|--input) input_dir="$2"
 			shift 2
@@ -61,42 +66,45 @@ fi
 if [ ! -d "$output_dir" ]; then
 	echo "Output directory does not exist. Creating."
 	mkdir "$output_dir"
-fi
-
-if [ -d "$output_dir" ]; then
-	curr_file_idx=1;
-	total_files=$(find "$input_dir" -name *.gif | wc -l);
-	if [ $total_files -eq 0 ]; then
-		echo "No GIFs to convert";
-		exit 0;
+	if [ ! -d "$output_dir" ]; then
+		echo "Failed to make output directory. Insufficient permissions?"
+		exit 1
 	fi
-	for file in "$input_dir"/*.gif; do
-		file_name=$(basename "$file" .gif);
-		target_path="$output_dir/$file_name.mp4";
+fi 
 
-		# ffmpeg's no overwrite flag returns an error code and screws up the error checker.
-		if [ "$overwrite_files" = "n" ]; then
-			ls "$target_path" >/dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				echo "Converted GIF \"$file_name.mp4\" already exists! Skipping (Use -v to overwrite)"
-				let curr_file_idx=$curr_file_idx+1;
-				continue;
-			fi
-		fi
+shopt -s extglob
+function convert_gif_to_h264() {
+	# Arguments: File path, output directory, overwrite files, delete original
 
-		echo "Converting \""$file"\" ($curr_file_idx/$total_files)";
-		ffmpeg -i "$file" -y -hide_banner -loglevel warning -stats -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" "$target_path";
-		exit_code=$?;
-		if [ $exit_code -eq 255 ]; then
-			echo "Terminating program."
-			break;
+	# Remove the file path and file extension
+	file_name="${1%.*}"
+	file_name="${file_name##*/}"
+
+	# Check if the converted video already exists
+	target_path="$2/$file_name.mp4"
+	if [ "$3" = "n" ]; then
+		ls "$target_path" >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			echo "Converted GIF \"$file_name.mp4\" already exists! Skipping (Use -v to overwrite)"
+			return 1;
 		fi
-		if [ ! $exit_code -eq 0 ]; then
-			echo "An error has occurred. Please refer to any above output." >&2;
-			exit 1;
-		fi
-		let curr_file_idx=$curr_file_idx+1;
-	done;
-else
-	echo "Failed to create output directory. Insufficient permissions?" >&2;
-fi
+	fi
+
+	echo "Converting \""$1"\""
+	ffmpeg -i "$1" -y -hide_banner -loglevel warning -stats -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" "$target_path";
+
+	exit_code=$?;
+	if [ $exit_code -eq 255 ]; then
+		echo "Terminating program."
+		break;
+	fi
+	if [ ! $exit_code -eq 0 ]; then
+		echo "An error has occurred. Please refer to any above output." >&2;
+		exit 1;
+	fi
+}
+export -f convert_gif_to_h264
+
+# Search for GIFs
+find "$input_dir" -regex '.*.\([Gg][Ii][Ff]\)$' -exec bash -c "convert_gif_to_h264 \"{}\" \"$output_dir\" $overwrite_files $delete_originals" \;
+
