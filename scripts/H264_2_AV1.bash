@@ -187,7 +187,7 @@ function convert_to_av1() {
 		echo "	Bitrate for this video will be capped to $video_ideal bits/second"
 	fi
 
-	ffmpeg -i "$1" -y -hide_banner -loglevel warning -stats -c:v libsvtav1 -preset $2 -b:v $new_bitrate -c:a libopus -b:a 96K -map 0 "$target_path";
+	ffmpeg -i "$1" -y -hide_banner -loglevel warning -stats -c:v libsvtav1 -preset $2 -b:v $new_bitrate -c:a libopus -b:a 96K -map 0 -map -0:d "$target_path";
 	
 	exit_code=$?
 	if [ $exit_code -eq 255 ]; then
