@@ -150,7 +150,7 @@ function convert_to_av1() {
 
 	video_codec=$(grep "codec_name" metadata.tmp.txt)
 	video_codec=${video_codec:11}
-	if [[ ! video_codec="h264" ]]; then
+	if [[ ! $video_codec="h264" ]]; then
 		echo "Video \""$1"\" is not encoded in H.264. Skipping."
 		return 1;
 	fi
