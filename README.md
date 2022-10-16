@@ -17,6 +17,8 @@ Since GIF's primary appeal is it's animation capabilities, this script takes fra
 
 ### Flags
 
+``--delete-originals``: After a GIF is successfully converted, the GIF is deleted.
+
 ``-i | --input [directory_path]``: Manually specify the input directory to scan and convert files. If not given, uses the directory the script resides in.
 
 ``-o | --output [directory_path]`` **(REQUIRED)**: Manually specify output directory for files
