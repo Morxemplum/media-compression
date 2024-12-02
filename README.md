@@ -1,3 +1,6 @@
+# Archived
+**This repository is now archived, as any scripts I now have are part of my [dotfiles](https://github.com/Morxemplum/dotfiles) repository.**
+
 # Media Compression
 
 These are a collection of shell scripts (written in Bash) that take media and compress them to lower file size without sacrificing quality (unless specified). A couple of different programs are needed to run the scripts, depending on the script
